@@ -4,18 +4,16 @@ fuse
 Fuse filesystem thing
 
 Requirements: python2.7, fuse, redis
-
 ```bash
+#Clone
 git clone https://github.com/theepicsnail/fuse
-cd fuse 
-./start.sh
-```
+cd fuse
 
-```bash
-echo "abc" > foo/A
-less foo/A
-```
+#Setup
+mkvirtualenv test --python=`which python2.7`
+pip install redis fusepy
 
-```bash
-./stop.sh
+#Run
+mkdir test
+python memory.py test
 ```
