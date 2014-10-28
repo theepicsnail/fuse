@@ -231,12 +231,12 @@ class SnailFS(Operations):
         self.data[path] = self.data[path][:length]
         self.files[path]['st_size'] = length
 
-    @log
-    def utimens(self, path, times=None):
-        now = time()
-        atime, mtime = times if times else (now, now)
-        self.files[path]['st_atime'] = atime
-        self.files[path]['st_mtime'] = mtime
+    #@log
+    #def utimens(self, path, times=None):
+    #    now = time()
+    #    atime, mtime = times if times else (now, now)
+    #    self.files[path]['st_atime'] = atime
+    #    self.files[path]['st_mtime'] = mtime
 
 
 if __name__ == '__main__':
