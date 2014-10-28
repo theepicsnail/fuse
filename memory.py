@@ -144,7 +144,6 @@ class SnailFS(Operations):
             parent = "/"
         self.client.sadd(dataKey(parent), name)
 
-        #self.client.hincrby(
         t = int(time())
         self.client.hmset(statKey(path), dict(
                 st_mode=(S_IFREG | mode),
@@ -156,6 +155,15 @@ class SnailFS(Operations):
 
         self.fd += 1
         return self.fd
+
+    @log
+    def unlink(self, path):
+        parent, name = path.rsplit("/",1)
+        print("rm: {} {}".format(parent, name))
+        if not parent:
+            parent = "/"
+        self.client.srem(dataKey(parent), name)
+        self.client.delete(dataKey(path), statKey(path))
 
     @log
     def write(self, path, data, offset, fh):
@@ -222,10 +230,6 @@ class SnailFS(Operations):
     def truncate(self, path, length, fh=None):
         self.data[path] = self.data[path][:length]
         self.files[path]['st_size'] = length
-
-    @log
-    def unlink(self, path):
-        self.files.pop(path)
 
     @log
     def utimens(self, path, times=None):
