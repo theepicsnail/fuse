@@ -12,10 +12,16 @@ from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
 
 import redis
 import pprint
+
+DEBUG = False
+
 if not hasattr(__builtins__, 'bytes'):
     bytes = str
 
 def log(cb):
+    if not DEBUG:
+        return cb
+
     def func(self, *a, **b):
         print "\n\033[92m{}\033[0m {} {}".format(cb.__code__.co_name.upper(),a,b)
         try:
@@ -32,42 +38,6 @@ def dataKey(path):
 
 def statKey(path):
     return "stat:" + path
-
-class SnailFS(Operations):
-    def __init__(self):
-        print("INIT")
-        self.client = redis.StrictRedis(host='localhost', port=6379, db=12)
-        self.client.flushdb()
-        self.mkdir("/", 0755)
-        pass
-
-    @log
-    def readdir(self, path, fh):
-        return []
-
-    @log
-    def getattr(self, path, fh=None):
-        stat = statKey(path)
-
-        if not self.client.exists(stat):
-            raise FuseOSError(ENOENT)
-
-        s = self.client.hgetall(stat)
-        return {k:int(v) for k,v in s.items()}
-
-    @log
-    def mkdir(self, path, mode):
-        stat = path + ":stat"
-
-        t = int(time())
-        self.client.hmset(stat, dict(
-                    st_mode=(S_IFDIR | 0755),
-                    st_nlink=2,
-                    st_size=0,
-                    st_ctime=t,
-                    st_mtime=t,
-                    st_atime=t))
-
 
 class SnailFS(Operations):
 
@@ -98,7 +68,7 @@ class SnailFS(Operations):
 
     def __init__(self):
         self.client = redis.StrictRedis(host='localhost', port=6379, db=12)
-        self.client.flushdb()
+        #self.client.flushdb()
 
         self.files = {}
         self.data = defaultdict(bytes)
@@ -118,13 +88,11 @@ class SnailFS(Operations):
                 st_atime=t))
         self.client.sadd(dataKey(path), ".", "..")
         parent, name = path.rsplit("/",1)
-        print((parent,name))
         if name:
             if not parent:
                 parent = "/"
 
             self.client.sadd(dataKey(parent), name)
-            print("Added {} to {}".format(name, dataKey(parent)))
 
     @log
     def getattr(self, path, fh=None):
@@ -139,7 +107,6 @@ class SnailFS(Operations):
     @log
     def create(self, path, mode):
         parent, name = path.rsplit("/",1)
-        print("create: {} {}".format(parent, name))
         if not parent:
             parent = "/"
         self.client.sadd(dataKey(parent), name)
@@ -159,7 +126,6 @@ class SnailFS(Operations):
     @log
     def unlink(self, path):
         parent, name = path.rsplit("/",1)
-        print("rm: {} {}".format(parent, name))
         if not parent:
             parent = "/"
         self.client.srem(dataKey(parent), name)
@@ -244,6 +210,9 @@ if __name__ == '__main__':
         print('usage: %s <mountpoint>' % argv[0])
         exit(1)
 
+    if not DEBUG:
+        print "To unmount:"
+        print "fusermount -u",argv[1]
 
-    fuse = FUSE(SnailFS(), argv[1], foreground=True)
+    fuse = FUSE(SnailFS(), argv[1], foreground=DEBUG)
     #fuse = FUSE(Memory(), argv[1], foreground=True)
