@@ -116,7 +116,15 @@ class SnailFS(Operations):
                 st_ctime=t,
                 st_mtime=t,
                 st_atime=t))
-        self.client.sadd(dataKey(path), ".")
+        self.client.sadd(dataKey(path), ".", "..")
+        parent, name = path.rsplit("/",1)
+        print((parent,name))
+        if name:
+            if not parent:
+                parent = "/"
+
+            self.client.sadd(dataKey(parent), name)
+            print("Added {} to {}".format(name, dataKey(parent)))
 
     @log
     def getattr(self, path, fh=None):
@@ -130,6 +138,13 @@ class SnailFS(Operations):
 
     @log
     def create(self, path, mode):
+        parent, name = path.rsplit("/",1)
+        print("create: {} {}".format(parent, name))
+        if not parent:
+            parent = "/"
+        self.client.sadd(dataKey(parent), name)
+
+        #self.client.hincrby(
         t = int(time())
         self.client.hmset(statKey(path), dict(
                 st_mode=(S_IFREG | mode),
@@ -161,7 +176,7 @@ class SnailFS(Operations):
 
     @log
     def readdir(self, path, fh):
-        print(self.client.keys("*"))
+        return self.client.smembers(dataKey(path))
         return ['.', '..'] + [x[1:] for x in self.files if x != '/']
 
     @log
