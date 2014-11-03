@@ -10,12 +10,12 @@ git clone https://github.com/theepicsnail/fuse
 cd fuse
 
 #Setup
-#mkvirtualenv test --python=`which python2.7`
-virtualenv test
-source test/bin/activate
+#mkvirtualenv $VIRTUAL_ENV --python=`which python2.7`
+virtualenv $VIRTUAL_ENV
+source $VIRTUAL_ENV/bin/activate
 pip install redis fusepy
 
 #Run
-mkdir test
-python memory.py test
+mkdir $MOUNT_POINT
+python memory.py $MOUNT_POINT
 ```
