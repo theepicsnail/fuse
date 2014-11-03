@@ -10,7 +10,9 @@ git clone https://github.com/theepicsnail/fuse
 cd fuse
 
 #Setup
-mkvirtualenv test --python=`which python2.7`
+#mkvirtualenv test --python=`which python2.7`
+virtualenv test
+source test/bin/activate
 pip install redis fusepy
 
 #Run
